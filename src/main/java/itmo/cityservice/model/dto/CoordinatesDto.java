@@ -1,13 +1,11 @@
-package itmo.cityservice.model.entity;
+package itmo.cityservice.model.dto;
 
-import jakarta.persistence.*;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
 
-@Embeddable
-public class Coordinates {
-    @Column(nullable = false)
+@XmlAccessorType(XmlAccessType.FIELD)
+public class CoordinatesDto {
     private Double x;
-
-    @Column(nullable = false)
     private Double y;
 
     public Double getX() {

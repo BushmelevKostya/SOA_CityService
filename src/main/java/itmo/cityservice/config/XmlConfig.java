@@ -1,15 +1,20 @@
 package itmo.cityservice.config;
 
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConverter;
 
 @Configuration
 public class XmlConfig {
+
     @Bean
-    public HttpMessageConverter<Object> createXmlHttpMessageConverter() {
-        return new MappingJackson2XmlHttpMessageConverter(new XmlMapper());
+    public MappingJackson2XmlHttpMessageConverter mappingJackson2XmlHttpMessageConverter() {
+        MappingJackson2XmlHttpMessageConverter converter = new MappingJackson2XmlHttpMessageConverter();
+        converter.getObjectMapper()
+                .registerModule(new JavaTimeModule())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        return converter;
     }
 }

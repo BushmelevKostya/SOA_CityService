@@ -1,53 +1,27 @@
-package itmo.cityservice.model.entity;
+package itmo.cityservice.model.dto;
 
-import jakarta.persistence.*;
+import itmo.cityservice.model.entity.Climate;
+import itmo.cityservice.model.entity.StandardOfLiving;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "cities")
-public class City {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+@XmlRootElement(name = "City")
+@XmlAccessorType(XmlAccessType.FIELD)
+public class CityDto {
     private Long id;
-
-    @Column(nullable = false)
     private String name;
-
-    @Embedded
-    private Coordinates coordinates;
-
-    @Column(name = "creation_date", nullable = false, updatable = false)
-    private LocalDateTime creationDate = LocalDateTime.now();
-
-    @Column(nullable = false)
+    private CoordinatesDto coordinates;
+    private LocalDateTime creationDate;
     private Integer area;
-
-    @Column(nullable = false)
     private Integer population;
-
-    @Column(name = "meters_above_sea_level")
     private Double metersAboveSeaLevel;
-
-    @Column(name = "car_code", nullable = false)
     private Integer carCode;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private Climate climate;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "standard_of_living")
     private StandardOfLiving standardOfLiving;
-
-    @Embedded
-    @AttributeOverrides({
-            @AttributeOverride(name = "name", column = @Column(name = "governor_name")),
-            @AttributeOverride(name = "age", column = @Column(name = "governor_age")),
-            @AttributeOverride(name = "height", column = @Column(name = "governor_height")),
-            @AttributeOverride(name = "birthday", column = @Column(name = "governor_birthday"))
-    })
-    private Human governor;
+    private HumanDto governor;
 
     public Long getId() {
         return id;
@@ -65,11 +39,11 @@ public class City {
         this.name = name;
     }
 
-    public Coordinates getCoordinates() {
+    public CoordinatesDto getCoordinates() {
         return coordinates;
     }
 
-    public void setCoordinates(Coordinates coordinates) {
+    public void setCoordinates(CoordinatesDto coordinates) {
         this.coordinates = coordinates;
     }
 
@@ -129,12 +103,11 @@ public class City {
         this.standardOfLiving = standardOfLiving;
     }
 
-    public Human getGovernor() {
+    public HumanDto getGovernor() {
         return governor;
     }
 
-    public void setGovernor(Human governor) {
+    public void setGovernor(HumanDto governor) {
         this.governor = governor;
     }
 }
-

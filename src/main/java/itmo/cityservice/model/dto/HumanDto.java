@@ -1,21 +1,19 @@
-package itmo.cityservice.model.entity;
+package itmo.cityservice.model.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import itmo.cityservice.service.LocalDateXmlAdapter;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+
 import java.time.LocalDate;
-
-@Embeddable
-public class Human {
-    @Column(nullable = false)
+@XmlRootElement(name = "Human")
+@XmlAccessorType(XmlAccessType.FIELD)
+public class HumanDto {
     private String name;
-
     private Integer age;
-
     private Double height;
-
-    @Column(name = "birthday")
+    @XmlJavaTypeAdapter(LocalDateXmlAdapter.class)
     private LocalDate birthday;
 
     public String getName() {

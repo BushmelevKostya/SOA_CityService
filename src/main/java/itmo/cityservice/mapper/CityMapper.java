@@ -1,131 +1,147 @@
 package itmo.cityservice.mapper;
 
-import itmo.cityservice.model.dto.CityDTO;
-import itmo.cityservice.model.dto.CoordinatesDTO;
-import itmo.cityservice.model.dto.CreateCityRequest;
-import itmo.cityservice.model.dto.HumanDTO;
+import itmo.cityservice.model.dto.CityCreateRequestDto;
+import itmo.cityservice.model.dto.CityDto;
+import itmo.cityservice.model.dto.CoordinatesDto;
+import itmo.cityservice.model.dto.HumanDto;
 import itmo.cityservice.model.entity.City;
 import itmo.cityservice.model.entity.Coordinates;
 import itmo.cityservice.model.entity.Human;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
+import java.util.List;
+import java.util.stream.Collectors;
 
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
-
-@Service
+@Component
 public class CityMapper {
 
-    public CityDTO toDto(City entity) {
-        return new CityDTO(
-                entity.getId(),
-                entity.getName(),
-                toCoordinatesDto(entity.getCoordinates()),
-                entity.getCreationDate(),
-                entity.getArea(),
-                entity.getPopulation(),
-                entity.getMetersAboveSeaLevel(),
-                entity.getCarCode(),
-                entity.getClimate(),
-                entity.getStandardOfLiving(),
-                toHumanDto(entity.getGovernor())
-        );
+    public CityDto toDto(City city) {
+        if (city == null) {
+            return null;
+        }
+
+        CityDto dto = new CityDto();
+        dto.setId(city.getId());
+        dto.setName(city.getName());
+        dto.setCoordinates(toDto(city.getCoordinates()));
+        dto.setCreationDate(city.getCreationDate());
+        dto.setArea(city.getArea());
+        dto.setPopulation(city.getPopulation());
+        dto.setMetersAboveSeaLevel(city.getMetersAboveSeaLevel());
+        dto.setCarCode(city.getCarCode());
+        dto.setClimate(city.getClimate());
+        dto.setStandardOfLiving(city.getStandardOfLiving());
+        dto.setGovernor(toDto(city.getGovernor()));
+
+        return dto;
     }
 
-    public City toEntity(CreateCityRequest dto) {
+    public List<CityDto> toDtoList(List<City> cities) {
+        return cities.stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
+    }
+
+    public City toEntity(CityCreateRequestDto dto) {
+        if (dto == null) {
+            return null;
+        }
+
         City city = new City();
         city.setName(dto.getName());
-        city.setCoordinates(toCoordinatesEntity(dto.getCoordinates()));
-        city.setCreationDate(OffsetDateTime.now());
+        city.setCoordinates(toEntity(dto.getCoordinates()));
         city.setArea(dto.getArea());
         city.setPopulation(dto.getPopulation());
         city.setMetersAboveSeaLevel(dto.getMetersAboveSeaLevel());
         city.setCarCode(dto.getCarCode());
         city.setClimate(dto.getClimate());
         city.setStandardOfLiving(dto.getStandardOfLiving());
-        city.setGovernor(toHumanEntity(dto.getGovernor()));
+        city.setGovernor(toEntity(dto.getGovernor()));
+
         return city;
     }
 
-    public void updateEntityFromDto(CreateCityRequest dto, City entity) {
-        if (dto.getName() != null) {
-            entity.setName(dto.getName());
-        }
-        if (dto.getCoordinates() != null) {
-            entity.setCoordinates(toCoordinatesEntity(dto.getCoordinates()));
-        }
-        if (dto.getArea() != null) {
-            entity.setArea(dto.getArea());
-        }
-        if (dto.getPopulation() != null) {
-            entity.setPopulation(dto.getPopulation());
-        }
-        if (dto.getMetersAboveSeaLevel() != null) {
-            entity.setMetersAboveSeaLevel(dto.getMetersAboveSeaLevel());
-        }
-        if (dto.getCarCode() != null) {
-            entity.setCarCode(dto.getCarCode());
-        }
-        if (dto.getClimate() != null) {
-            entity.setClimate(dto.getClimate());
-        }
-        if (dto.getStandardOfLiving() != null) {
-            entity.setStandardOfLiving(dto.getStandardOfLiving());
-        }
-        if (dto.getGovernor() != null) {
-            entity.setGovernor(toHumanEntity(dto.getGovernor()));
-        }
-    }
-
-    public CoordinatesDTO toCoordinatesDto(Coordinates entity) {
-        if (entity == null) {
+    public CoordinatesDto toDto(Coordinates coordinates) {
+        if (coordinates == null) {
             return null;
         }
-	    return new CoordinatesDTO(entity.getId(), entity.getX(), entity.getY());
+
+        CoordinatesDto dto = new CoordinatesDto();
+        dto.setX(coordinates.getX());
+        dto.setY(coordinates.getY());
+
+        return dto;
     }
 
-    public Coordinates toCoordinatesEntity(CoordinatesDTO dto) {
+    public Coordinates toEntity(CoordinatesDto dto) {
         if (dto == null) {
             return null;
         }
-        Coordinates entity = new Coordinates();
-        entity.setId(dto.id());
-        entity.setX(dto.x());
-        entity.setY(dto.y());
-        return entity;
-    }
 
-    public HumanDTO toHumanDto(Human entity) {
-        if (entity == null) {
-            return null;
-        }
-	    return new HumanDTO(entity.getId(), entity.getName(), entity.getAge(), entity.getHeight(), entity.getBirthday());
-    }
-
-    public Human toHumanEntity(HumanDTO dto) {
-        if (dto == null) {
-            return null;
-        }
-        Human entity = new Human();
-        entity.setId(dto.id());
-        entity.setName(dto.name());
-        entity.setAge(dto.age());
-        entity.setHeight(dto.height());
-        entity.setBirthday(dto.birthday());
-        return entity;
-    }
-    
-    public Coordinates createNewCoordinates(Double x, Double y) {
         Coordinates coordinates = new Coordinates();
-        coordinates.setX(x);
-        coordinates.setY(y);
+        coordinates.setX(dto.getX());
+        coordinates.setY(dto.getY());
+
         return coordinates;
     }
-    public Human createNewHuman(String name, Long age, Double height, LocalDate birthday) {
+
+    public HumanDto toDto(Human human) {
+        if (human == null) {
+            return null;
+        }
+
+        HumanDto dto = new HumanDto();
+        dto.setName(human.getName());
+        dto.setAge(human.getAge());
+        dto.setHeight(human.getHeight());
+        dto.setBirthday(human.getBirthday());
+
+        return dto;
+    }
+
+    public Human toEntity(HumanDto dto) {
+        if (dto == null) {
+            return null;
+        }
+
         Human human = new Human();
-        human.setName(name);
-        human.setAge(age);
-        human.setHeight(height);
-        human.setBirthday(birthday);
+        human.setName(dto.getName());
+        human.setAge(dto.getAge());
+        human.setHeight(dto.getHeight());
+        human.setBirthday(dto.getBirthday());
+
         return human;
+    }
+
+    public void updateEntityFromDto(City existingCity, CityCreateRequestDto dto) {
+        if (dto == null || existingCity == null) {
+            return;
+        }
+
+        existingCity.setName(dto.getName());
+        existingCity.setArea(dto.getArea());
+        existingCity.setPopulation(dto.getPopulation());
+        existingCity.setMetersAboveSeaLevel(dto.getMetersAboveSeaLevel());
+        existingCity.setCarCode(dto.getCarCode());
+        existingCity.setClimate(dto.getClimate());
+        existingCity.setStandardOfLiving(dto.getStandardOfLiving());
+
+        if (dto.getCoordinates() != null) {
+            if (existingCity.getCoordinates() == null) {
+                existingCity.setCoordinates(new Coordinates());
+            }
+            existingCity.getCoordinates().setX(dto.getCoordinates().getX());
+            existingCity.getCoordinates().setY(dto.getCoordinates().getY());
+        }
+
+        if (dto.getGovernor() != null) {
+            if (existingCity.getGovernor() == null) {
+                existingCity.setGovernor(new Human());
+            }
+            Human governor = existingCity.getGovernor();
+            governor.setName(dto.getGovernor().getName());
+            governor.setAge(dto.getGovernor().getAge());
+            governor.setHeight(dto.getGovernor().getHeight());
+            governor.setBirthday(dto.getGovernor().getBirthday());
+        }
     }
 }
