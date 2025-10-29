@@ -1,0 +1,670 @@
+openapi: 3.0.3
+info:
+  title: City Collection API
+  description: API для управления коллекцией объектов City
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:5736/api/v1
+
+tags:
+  - name: cities
+    description: Операции с коллекцией City
+  - name: utils
+    description: Специальные операции
+
+paths:
+  /cities:
+    get:
+      tags:
+        - cities
+      summary: Получить список городов
+      description: Поиск и фильтрация списка городов с поддержкой пагинации
+      operationId: getCities
+      parameters:
+        #сортировка
+        - name: sort
+          in: query
+          description: Сортировка элемнтов массива
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              default: id
+              enum:
+                - id
+                - name
+                - coordinates.x
+                - coordinates.y
+                - creationDate
+                - area
+                - population
+                - metersAboveSeaLevel
+                - carCode
+                - climate
+                - standardOfLiving
+                - governor.name
+                - governor.age
+                - governor.height
+                - governor.birthday
+                - -id
+                - -name
+                - -coordinates.x
+                - -coordinates.y
+                - -creationDate
+                - -area
+                - -population
+                - -metersAboveSeaLevel
+                - -carCode
+                - -climate
+                - -standardOfLiving
+                - -governor.name
+                - -governor.age
+                - -governor.height
+                - -governor.birthday
+        # пагинация
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+          description: Номер страницы
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+          description: Размер страницы
+        
+        # фильтрация
+        - name: filter
+          in: query
+          required: false
+          description: |
+            Параметры фильтрации в формате field[operator]=value.
+            Доступные операторы: eq, ne, gt, lt, gte, lte, like, in, notin.
+            Примеры: name[eq]=Moscow, area[gt]=100, climate[in]=OCEANIC,STEPPE
+          style: deepObject
+          explode: true
+          schema:
+            type: object
+            additionalProperties:
+              type: string
+            example:
+              name[eq]: "Moscow"
+              area[gt]: "100"
+              climate[in]: "OCEANIC,STEPPE"
+              coordinates.x[gt]: "-100"
+              governor.age[lt]: "50"
+
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/xml:
+              schema:
+                type: object
+                xml:
+                  name: CitiesResponse
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CityArray'
+                  page:
+                    type: integer
+                    description: Текущий номер страницы
+                    example: 1
+                  pageSize:
+                    type: integer
+                    description: Размер страницы
+                    example: 10
+                  totalPages:
+                    type: integer
+                    description: Общее количество страниц
+                    example: 26
+        '400':
+          description: Неверные входные данные
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error400'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error500'
+        default:
+          description: Непредвиденная ошибка
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorDefault'
+
+  # получение элемента по id
+  /cities/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          format: int64
+          minimum: 1
+        description: ID города
+    get:
+      tags:
+        - cities
+      summary: Получить город по id
+      responses:
+        '200':
+          description: Успешный ответ
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/City'
+        '400':
+          description: Неверный ID
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error400'
+        '404':
+          description: Город с указанным ID не найден
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error404'
+        default:
+          description: Непредвиденная ошибка
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorDefault'
+
+    # создание нового элемента
+    post:
+      tags:
+        - cities
+      summary: Создать новый город
+      description: Создает новый город
+      requestBody:
+        required: true
+        content:
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/CreateCityRequest'
+            example: |
+              <CityCreateRequest>
+                <name>Москва</name>
+                <coordinates>
+                  <x>55.7558</x>
+                  <y>37.6173</y>
+                </coordinates>
+                <area>1000</area> 
+                <population>100000</population>
+                <metersAboveSeaLevel>156.0</metersAboveSeaLevel>
+                <carCode>10</carCode>
+                <climate>STEPPE</climate>
+                <standardOfLiving>ULTRA_HIGH</standardOfLiving>
+                <governor>
+                  <name>Имя</name>
+                  <age>60</age>
+                  <height>1.78</height>
+                  <birthday>1975-01-01</birthday>
+                </governor>
+              </CityCreateRequest>
+      responses:
+        '201':
+          description: Город успешно создан
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/City'
+        '400':
+          description: Неверные данные запроса
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error400'
+        '422':
+          description: Ошибка валидации тела запроса
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error422'
+        '500':
+          description: Внутренняя ошибка сервера
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error500'
+        default:
+          description: Непредвиденная ошибка
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorDefault'
+    # обновление элемента
+    put:
+      tags:
+        - cities
+      summary: Обновить город по идентификатору
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+          description: ID обновляемого города
+      requestBody:
+        required: true
+        content:
+          application/xml:
+            schema:
+              $ref: '#/components/schemas/CreateCityRequest'
+            example: |
+              <CityCreateRequest>
+                <name>Москва</name>
+                <coordinates>
+                  <x>55.7558</x>
+                  <y>37.6173</y>
+                </coordinates>
+                <area>1000</area> 
+                <population>100000</population>
+                <metersAboveSeaLevel>156.0</metersAboveSeaLevel>
+                <carCode>10</carCode>
+                <climate>STEPPE</climate>
+                <standardOfLiving>ULTRA_HIGH</standardOfLiving>
+                <governor>
+                  <name>Имя</name>
+                  <age>60</age>
+                  <height>1.78</height>
+                  <birthday>1975-01-01</birthday>
+                </governor>
+              </CityCreateRequest>
+      responses:
+        '200':
+          description: Город успешно обновлен
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/City'
+        '400':
+          description: Ошибка валидации данных
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error400'
+        '404':
+          description: Город не найден
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error404'
+        '422':
+          description: Ошибка валидации тела запроса
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error422'
+        default:
+          description: Непредвиденная ошибка
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorDefault'
+
+    # удаление элемента
+    delete:
+      tags:
+        - cities
+      summary: Удалить город по id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+          description: id удаляемого города
+      responses:
+        '204':
+          description: Город удален
+        '404':
+          description: Город не найден
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error404'
+        '400':
+          description: Неверный ID
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error400'
+        default:
+          description: Непредвиденная ошибка
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorDefault'
+
+  # Удалить все объекты, значение поля metersAboveSeaLevel которого эквивалентно заданному.
+  /cities/sea-level:
+    delete:
+      tags:
+        - utils
+      summary: Удалить города по высоте над уровнем моря
+      parameters:
+        - in: query
+          name: metersAboveSeaLevel
+          required: true
+          schema:
+            type: number
+            format: double
+          description: Значение высоты над уровнем моря для удаления
+      responses:
+        '200':
+          description: Успешное выполнение операции
+          content:
+            application/xml:
+              schema:
+                type: object
+                xml:
+                  name: DeleteResult
+                properties:
+                  deletedCount:
+                    type: integer
+                    description: Количество удаленных городов
+        '400':
+          description: Неверный параметр
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error400'
+        default:
+          description: Непредвиденная ошибка
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorDefault'
+  # Рассчитать среднее значение поля carCode для всех объектов.
+  /cities/car-code/avg:
+    get:
+      tags:
+        - utils
+      summary: Получить среднее значение кода автомобиля
+      responses:
+        '200':
+          description: Успешное выполнение операции
+          content:
+            application/xml:
+              schema:
+                type: object
+                xml:
+                  name: AverageResult
+                properties:
+                  average:
+                    type: number
+                    format: double
+                    description: Среднее значение поля carCode
+        '404':
+          description: Коллекция пуста
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error404'
+        default:
+          description: Непредвиденная ошибка
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorDefault'
+
+  # Вернуть один (любой) объект, значение поля name которого является минимальным
+  /cities/name/min:
+    get:
+      tags:
+        - utils
+      summary: Получить город с минимальным названием
+      responses:
+        '200':
+          description: Успешное выполнение операции
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/City'
+        '404':
+          description: Коллекция пуста
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/Error404'
+        default:
+          description: Непредвиденная ошибка
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/ErrorDefault'
+
+components:
+  schemas:
+    CityArray:
+      type: array
+      xml:
+        name: Cities
+        wrapped: true
+      items:
+        $ref: '#/components/schemas/City'
+
+    City:
+      type: object
+      xml:
+        name: City
+      required:
+        - id
+        - name
+        - coordinates
+        - creationDate
+        - area
+        - population
+        - carCode
+        - climate
+        - governor
+      properties:
+        id:
+          type: integer
+          format: int64
+          readOnly: true
+          minimum: 1
+          description: uid
+        name:
+          type: string
+          minLength: 1
+          example: "Санкт-Петербург"
+          description: Название города
+        coordinates:
+          $ref: '#/components/schemas/Coordinates'
+        creationDate:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Дата создания (генерируется автоматически)
+        area:
+          type: integer
+          minimum: 1
+          description: Площадь города (> 0)
+        population:
+          type: integer
+          minimum: 1
+          description: Население города (> 0)
+        metersAboveSeaLevel:
+          type: number
+          format: double
+          nullable: true
+          description: Высота над уровнем моря
+        carCode:
+          type: integer
+          format: int64
+          minimum: 1
+          maximum: 1000
+          description: Код автомобиля (1-1000)
+        climate:
+          type: string
+          enum: [ OCEANIC, STEPPE, SUBARCTIC, DESERT ]
+          description: Климат
+        standardOfLiving:
+          type: string
+          enum: [ ULTRA_HIGH, MEDIUM, VERY_LOW ]
+          nullable: true
+          description: Уровень жизни
+        governor:
+          $ref: '#/components/schemas/Human'
+
+    Coordinates:
+      type: object
+      xml:
+        name: Coordinates
+      required:
+        - x
+        - y
+      properties:
+        x:
+          type: number
+          format: double
+          minimum: -190
+          exclusiveMinimum: true
+          description: Координата X (> -190)
+        y:
+          type: number
+          format: double
+          description: Координата Y
+
+    Human:
+      type: object
+      xml:
+        name: Human
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          example: "Костя"
+          description: Имя человека
+        age:
+          type: integer
+          format: int64
+          minimum: 1
+          nullable: true
+          description: Возраст человека (> 0)
+        height:
+          type: number
+          format: double
+          minimum: 0
+          exclusiveMinimum: true
+          nullable: true
+          description: Рост человека (> 0)
+        birthday:
+          type: string
+          format: date
+          nullable: true
+          description: День рождения человека
+
+    Error400:
+      xml:
+        name: message
+      type: string
+      example: "Ошибка в url запроса"
+      description: Сообщение об ошибке
+    Error404:
+      xml:
+        name: message
+      type: string
+      example: "Объект не найден"
+      description: Сообщение об ошибке
+    Error422:
+      xml:
+        name: message
+      type: string
+      example: "Ошибка валидации тела запроса"
+      description: Сообщение об ошибке
+    Error500:
+      xml:
+        name: message
+      type: string
+      example: "Ошибка сервера"
+      description: Сообщение об ошибке
+    ErrorDefault:
+      xml:
+        name: message
+      type: string
+      example: "Непридвиденная ошибка"
+      description: Сообщение об ошибке
+
+    CreateCityRequest:
+      type: object
+      xml:
+        name: CreateCityRequest
+      required:
+        - name
+        - coordinates
+        - area
+        - population
+        - carCode
+        - climate
+        - governor
+      properties:
+        name:
+          type: string
+          minLength: 1
+          example: "Москва"
+          description: Название города
+        coordinates:
+          $ref: '#/components/schemas/Coordinates'
+        area:
+          type: integer
+          minimum: 1
+          example: 2561
+          description: Площадь города (> 0)
+        population:
+          type: integer
+          minimum: 1
+          example: 12655000
+          description: Население города (> 0)
+        metersAboveSeaLevel:
+          type: number
+          format: double
+          nullable: true
+          example: 156.0
+          description: Высота над уровнем моря
+        carCode:
+          type: integer
+          format: int64
+          minimum: 1
+          maximum: 1000
+          example: 77
+          description: Код автомобиля (1-1000)
+        climate:
+          type: string
+          enum: [ OCEANIC, STEPPE, SUBARCTIC, DESERT ]
+          example: "STEPPE"
+          description: Климат
+        standardOfLiving:
+          type: string
+          enum: [ ULTRA_HIGH, MEDIUM, VERY_LOW ]
+          nullable: true
+          example: "ULTRA_HIGH"
+          description: Уровень жизни
+        governor:
+          $ref: '#/components/schemas/Human'
