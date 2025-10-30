@@ -27,6 +27,7 @@ repositories {
 }
 
 dependencies {
+    implementation("org.springframework.boot:spring-boot-starter-web-services")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-data-rest")
 	implementation("org.springframework.boot:spring-boot-starter-security")
@@ -35,9 +36,12 @@ dependencies {
 	implementation("org.openapitools:jackson-databind-nullable:0.2.6")
 	implementation("io.swagger:swagger-annotations:1.6.8")
 	implementation("javax.annotation:javax.annotation-api:1.3.2")
+
 	implementation("jakarta.xml.bind:jakarta.xml.bind-api:4.0.0")
-	implementation("org.glassfish.jaxb:jaxb-runtime:4.0.2")
+	implementation("org.glassfish.jaxb:jaxb-runtime:4.0.3")
 	implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml")
+    implementation ("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+
 	implementation("org.mapstruct:mapstruct:1.5.5.Final")
 	annotationProcessor("org.mapstruct:mapstruct-processor:1.5.5.Final")
 	implementation("org.yaml:snakeyaml:2.2")
