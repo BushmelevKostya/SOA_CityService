@@ -54,129 +54,200 @@ function App() {
     };
   };
 
-  // Парсер XML для браузера
-  const parseXML = (xmlString) => {
-    return new Promise((resolve, reject) => {
-      try {
-        const parser = new DOMParser();
-        const xmlDoc = parser.parseFromString(xmlString, "text/xml");
 
-        // Проверяем на ошибки парсинга
-        const parserError = xmlDoc.querySelector('parsererror');
-        if (parserError) {
-          reject(new Error('XML parsing error'));
-          return;
-        }
 
-        resolve(xmlDoc);
-      } catch (err) {
-        reject(err);
-      }
-    });
-  };
-
-  // Получение списка городов
-  const fetchCities = async () => {
-    if (!auth.username || !auth.password) {
-      setError('Пожалуйста, введите данные для аутентификации');
-      setShowAuthForm(true);
-      return;
-    }
-
-    setLoading(true);
-    setError('');
+// Замените функцию parseXML на более надежную:
+const parseXML = (xmlString) => {
+  return new Promise((resolve, reject) => {
     try {
-      const params = new URLSearchParams();
-      if (page) params.append('page', page);
-      if (pageSize) params.append('pageSize', pageSize);
-      if (sort) params.append('sort', sort);
-      if (filter) params.append('filter', filter);
+      // Удаляем BOM и лишние символы
+      const cleanXml = xmlString.trim();
+      const parser = new DOMParser();
+      const xmlDoc = parser.parseFromString(cleanXml, "text/xml");
 
-      const url = `${API_BASE_URL}/cities${params.toString() ? `?${params.toString()}` : ''}`;
+      // Проверяем на ошибки парсинга
+      const parserError = xmlDoc.querySelector('parsererror');
+      if (parserError) {
+        console.error('XML Parse Error:', parserError.textContent);
+        reject(new Error('XML parsing error: ' + parserError.textContent));
+        return;
+      }
 
-      const response = await axios.get(url, {
-        headers: getAuthHeaders()
-      });
+      resolve(xmlDoc);
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
 
-      const xmlDoc = await parseXML(response.data);
+const fetchCities = async () => {
+  if (!auth.username || !auth.password) {
+    setError('Пожалуйста, введите данные для аутентификации');
+    setShowAuthForm(true);
+    return;
+  }
 
-      // Парсим данные городов
-      const citiesData = [];
-      const dataElement = xmlDoc.getElementsByTagName('data')[0];
-      if (dataElement) {
-        const citiesElements = dataElement.getElementsByTagName('City');
+  setLoading(true);
+  setError('');
+  try {
+    const params = new URLSearchParams();
+    if (page) params.append('page', page);
+    if (pageSize) params.append('pageSize', pageSize);
+    if (sort) params.append('sort', sort);
+    if (filter) params.append('filter', filter);
 
-        for (let i = 0; i < citiesElements.length; i++) {
-          const cityElement = citiesElements[i];
-          const city = {};
+    const url = `${API_BASE_URL}/cities${params.toString() ? `?${params.toString()}` : ''}`;
 
-          // Парсим простые поля
-          const idElement = cityElement.getElementsByTagName('id')[0];
-          if (idElement) city.id = parseInt(idElement.textContent);
+    const response = await axios.get(url, {
+      headers: getAuthHeaders()
+    });
 
-          const nameElement = cityElement.getElementsByTagName('name')[0];
-          if (nameElement) city.name = nameElement.textContent;
+    console.log('Raw XML Response:', response.data);
 
-          const areaElement = cityElement.getElementsByTagName('area')[0];
-          if (areaElement) city.area = parseInt(areaElement.textContent);
+    const xmlDoc = await parseXML(response.data);
 
-          const populationElement = cityElement.getElementsByTagName('population')[0];
-          if (populationElement) city.population = parseInt(populationElement.textContent);
+    // Парсим данные городов
+    const citiesData = [];
 
-          const climateElement = cityElement.getElementsByTagName('climate')[0];
-          if (climateElement) city.climate = climateElement.textContent;
+    // Ищем корневой элемент CitiesResponseDto
+    const rootElement = xmlDoc.documentElement;
 
-          const carCodeElement = cityElement.getElementsByTagName('carCode')[0];
-          if (carCodeElement) city.carCode = parseInt(carCodeElement.textContent);
+    // Ищем data элемент (который содержит массив городов)
+    let dataContainer = null;
+    for (let i = 0; i < rootElement.children.length; i++) {
+      if (rootElement.children[i].tagName === 'data') {
+        dataContainer = rootElement.children[i];
+        break;
+      }
+    }
 
-          // Парсим координаты
-          const coordinatesElement = cityElement.getElementsByTagName('coordinates')[0];
-          if (coordinatesElement) {
-            const xElement = coordinatesElement.getElementsByTagName('x')[0];
-            const yElement = coordinatesElement.getElementsByTagName('y')[0];
-            city.coordinates = {
-              x: xElement ? parseFloat(xElement.textContent) : 0,
-              y: yElement ? parseFloat(yElement.textContent) : 0
-            };
+    // Парсим города из data контейнера
+    if (dataContainer) {
+      for (let i = 0; i < dataContainer.children.length; i++) {
+        const cityElement = dataContainer.children[i];
+        if (cityElement.tagName === 'data') { // Города обернуты в <data>
+          const city = parseCityElement(cityElement);
+          if (city.id) {
+            citiesData.push(city);
           }
-
-          // Парсим губернатора
-          const governorElement = cityElement.getElementsByTagName('governor')[0];
-          if (governorElement) {
-            const governor = {};
-            const govNameElement = governorElement.getElementsByTagName('name')[0];
-            if (govNameElement) governor.name = govNameElement.textContent;
-
-            const govAgeElement = governorElement.getElementsByTagName('age')[0];
-            if (govAgeElement) governor.age = parseInt(govAgeElement.textContent);
-
-            city.governor = governor;
-          }
-
-          citiesData.push(city);
         }
       }
-
-      setCities(citiesData);
-
-      // Получаем totalPages из ответа
-      const totalPagesElement = xmlDoc.getElementsByTagName('totalPages')[0];
-      if (totalPagesElement) {
-        setTotalPages(parseInt(totalPagesElement.textContent) || 1);
-      }
-
-    } catch (err) {
-      if (err.response?.status === 401) {
-        setError('Неверные учетные данные. Пожалуйста, проверьте логин и пароль.');
-        setShowAuthForm(true);
-      } else {
-        setError(`Ошибка загрузки городов: ${err.message}`);
-      }
-      console.error('Error fetching cities:', err);
-    } finally {
-      setLoading(false);
     }
-  };
+
+    console.log('Parsed cities:', citiesData);
+
+    setCities(citiesData);
+
+    // Получаем totalPages
+    let totalPagesValue = 1;
+    for (let i = 0; i < rootElement.children.length; i++) {
+      const child = rootElement.children[i];
+      if (child.tagName === 'totalPages') {
+        totalPagesValue = parseInt(child.textContent) || 1;
+        break;
+      }
+    }
+    setTotalPages(totalPagesValue);
+
+  } catch (err) {
+    console.error('Error in fetchCities:', err);
+    if (err.response?.status === 401) {
+      setError('Неверные учетные данные. Пожалуйста, проверьте логин и пароль.');
+      setShowAuthForm(true);
+    } else {
+      setError(`Ошибка загрузки городов: ${err.message}`);
+    }
+  } finally {
+    setLoading(false);
+  }
+};
+// Вспомогательная функция для парсинга одного города
+const parseCityElement = (cityElement) => {
+  const city = {};
+
+  // Парсим все дочерние элементы
+  for (let i = 0; i < cityElement.children.length; i++) {
+    const child = cityElement.children[i];
+    const tagName = child.tagName;
+    const textContent = child.textContent;
+
+    switch (tagName) {
+      case 'id':
+        city.id = parseInt(textContent) || 0;
+        break;
+      case 'name':
+        city.name = textContent || '';
+        break;
+      case 'area':
+        city.area = parseInt(textContent) || 0;
+        break;
+      case 'population':
+        city.population = parseInt(textContent) || 0;
+        break;
+      case 'carCode':
+        city.carCode = parseInt(textContent) || 0;
+        break;
+      case 'climate':
+        city.climate = textContent || '';
+        break;
+      case 'standardOfLiving':
+        city.standardOfLiving = textContent || '';
+        break;
+      case 'creationDate':
+        city.creationDate = textContent || '';
+        break;
+      case 'metersAboveSeaLevel':
+        city.metersAboveSeaLevel = parseFloat(textContent) || null;
+        break;
+      case 'coordinates':
+        city.coordinates = parseCoordinatesElement(child);
+        break;
+      case 'governor':
+        city.governor = parseGovernorElement(child);
+        break;
+      default:
+        // Игнорируем неизвестные элементы
+        break;
+    }
+  }
+
+  return city;
+};
+
+// Парсинг координат
+const parseCoordinatesElement = (coordinatesElement) => {
+  const coordinates = { x: 0, y: 0 };
+
+  for (let i = 0; i < coordinatesElement.children.length; i++) {
+    const child = coordinatesElement.children[i];
+    if (child.tagName === 'x') {
+      coordinates.x = parseFloat(child.textContent) || 0;
+    } else if (child.tagName === 'y') {
+      coordinates.y = parseFloat(child.textContent) || 0;
+    }
+  }
+
+  return coordinates;
+};
+
+// Парсинг губернатора
+const parseGovernorElement = (governorElement) => {
+  const governor = { name: '' };
+
+  for (let i = 0; i < governorElement.children.length; i++) {
+    const child = governorElement.children[i];
+    if (child.tagName === 'name') {
+      governor.name = child.textContent || '';
+    } else if (child.tagName === 'age') {
+      governor.age = parseInt(child.textContent) || null;
+    } else if (child.tagName === 'height') {
+      governor.height = parseFloat(child.textContent) || null;
+    }
+  }
+
+  return governor;
+};
+
 
   // Создание города
   const createCity = async (cityData) => {
