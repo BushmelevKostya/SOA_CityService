@@ -1,3 +1,5 @@
+import org.springframework.boot.gradle.tasks.bundling.BootWar
+
 plugins {
 	java
 	war
@@ -31,7 +33,10 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter-data-rest")
 	implementation("org.springframework.boot:spring-boot-starter-security")
-	implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-web") {
+        exclude(group = "ch.qos.logback", module = "logback-classic")
+        exclude(group = "ch.qos.logback", module = "logback-core")
+    }
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("org.openapitools:jackson-databind-nullable:0.2.6")
 	implementation("io.swagger:swagger-annotations:1.6.8")
@@ -95,6 +100,17 @@ sourceSets {
 			srcDirs("src/main/java", "${layout.buildDirectory.get()}/generated/src/main/java")
 		}
 	}
+}
+
+tasks.named<BootWar>("bootWar") {
+    enabled = true
+    archiveClassifier.set("boot")
+}
+
+
+tasks.named<War>("war") {
+    enabled = true
+    archiveClassifier.set("")
 }
 
 tasks {
