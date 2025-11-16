@@ -1,34 +1,38 @@
 package itmo.cityservice.service;
 
-import itmo.cityservice.exception.BadRequestException;
 import itmo.cityservice.exception.NotFoundException;
 import itmo.cityservice.exception.ValidationException;
 import itmo.cityservice.mapper.CityMapper;
 import itmo.cityservice.model.dto.*;
 import itmo.cityservice.model.entity.City;
-import itmo.cityservice.model.entity.Climate;
 import itmo.cityservice.repository.CityRepository;
-import org.springframework.data.domain.*;
+import itmo.cityservice.service.CityRequestValidator;
+import jakarta.transaction.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import jakarta.transaction.Transactional;
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class CityService {
     private final CityRepository cityRepository;
     private final CityMapper cityMapper;
+    private final CityRequestValidator validator;
 
-    public CityService(CityRepository cityRepository, CityMapper cityMapper) {
+    public CityService(CityRepository cityRepository, CityMapper cityMapper, CityRequestValidator validator) {
         this.cityRepository = cityRepository;
         this.cityMapper = cityMapper;
+        this.validator = validator;
     }
 
     public CitiesResponseDto getCities(List<String> sort, int page, int pageSize, String filter) {
-        if (page < 1) throw new BadRequestException("Номер страницы должен быть больше 0");
-        if (pageSize < 1 || pageSize > 100) {
-            throw new BadRequestException("Размер страницы должен быть от 1 до 100");
-        }
+        validator.validatePaginationParams(page, pageSize);
+        validator.validateSortFields(sort);
+        validator.validateFilterParam(filter);
 
         Specification<City> spec = CityFilterSpecificationBuilder.build(filter);
 
@@ -47,9 +51,7 @@ public class CityService {
     }
 
     public CityDto getCityById(Long id) {
-        if (id == null || id < 1) {
-            throw new BadRequestException("Неверный ID города");
-        }
+        validator.validateCityId(id);
 
         City city = cityRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Город с указанным ID не найден"));
@@ -59,7 +61,7 @@ public class CityService {
 
     @Transactional
     public CityDto createCity(CityCreateRequestDto dto) {
-        validateCityCreateRequest(dto);
+        validator.validateCityCreateRequest(dto);
 
         City city = cityMapper.toEntity(dto);
         City savedCity = cityRepository.save(city);
@@ -69,11 +71,9 @@ public class CityService {
 
     @Transactional
     public CityDto updateCity(Long id, CityCreateRequestDto dto) {
-        if (id == null || id < 1) {
-            throw new BadRequestException("Неверный ID города");
-        }
+        validator.validateCityId(id);
 
-        validateCityCreateRequest(dto);
+        validator.validateCityCreateRequest(dto);
 
         City existingCity = cityRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Город с указанным ID не найден"));
@@ -86,9 +86,7 @@ public class CityService {
 
     @Transactional
     public void deleteCity(Long id) {
-        if (id == null || id < 1) {
-            throw new BadRequestException("Неверный ID города");
-        }
+        validator.validateCityId(id);
 
         if (!cityRepository.existsById(id)) {
             throw new NotFoundException("Город с указанным ID не найден");
@@ -99,9 +97,7 @@ public class CityService {
 
     @Transactional
     public DeleteResultDto deleteCitiesBySeaLevel(Double metersAboveSeaLevel) {
-        if (metersAboveSeaLevel == null) {
-            throw new BadRequestException("Не указана высота над уровнем моря");
-        }
+        validator.validateSeaLevelParam(metersAboveSeaLevel);
 
         List<City> citiesToDelete = cityRepository.findByMetersAboveSeaLevel(metersAboveSeaLevel);
         cityRepository.deleteAll(citiesToDelete);
@@ -130,80 +126,16 @@ public class CityService {
         return cityMapper.toDto(city);
     }
 
-    private void validateCityCreateRequest(CityCreateRequestDto dto) {
-        if (dto == null) {
-            throw new ValidationException("Тело запроса не может быть пустым");
-        }
-
-        if (dto.getName() == null || dto.getName().isEmpty()) {
-            throw new ValidationException("Название города обязательно");
-        }
-
-        if (dto.getCoordinates() == null) {
-            throw new ValidationException("Координаты обязательны");
-        } else {
-            if (dto.getCoordinates().getX() == null || dto.getCoordinates().getX() <= -190) {
-                throw new ValidationException("Координата X должна быть больше -190");
-            }
-            if (dto.getCoordinates().getY() == null) {
-                throw new ValidationException("Координата Y обязательна");
-            }
-        }
-
-        if (dto.getArea() == null || dto.getArea() <= 0) {
-            throw new ValidationException("Площадь города должна быть больше 0");
-        }
-        if (dto.getPopulation() == null || dto.getPopulation() <= 0) {
-            throw new ValidationException("Население города должно быть больше 0");
-        }
-        if (dto.getCarCode() == null || dto.getCarCode() < 1 || dto.getCarCode() > 1000) {
-            throw new ValidationException("Код автомобиля должен быть в диапазоне от 1 до 1000");
-        }
-
-        if (dto.getClimate() == null) {
-            throw new ValidationException("Климат обязателен");
-        } else {
-            try {
-                Climate.valueOf(dto.getClimate().name());
-            } catch (IllegalArgumentException e) {
-                throw new ValidationException("Недопустимое значение климата");
-            }
-        }
-
-        if (dto.getGovernor() == null) {
-            throw new ValidationException("Губернатор обязателен");
-        } else {
-            if (dto.getGovernor().getName() == null || dto.getGovernor().getName().isEmpty()) {
-                throw new ValidationException("Имя губернатора обязательно");
-            }
-            if (dto.getGovernor().getAge() != null && dto.getGovernor().getAge() <= 0) {
-                throw new ValidationException("Возраст губернатора должен быть больше 0");
-            }
-            if (dto.getGovernor().getHeight() != null && dto.getGovernor().getHeight() <= 0) {
-                throw new ValidationException("Рост губернатора должен быть больше 0");
-            }
-        }
-    }
-
     private Sort createSort(List<String> sortFields) {
         if (sortFields == null || sortFields.isEmpty()) {
             return Sort.unsorted();
         }
 
         List<Sort.Order> orders = new ArrayList<>();
-        List<String> validFields = Arrays.asList(
-                "id", "name", "coordinates.x", "coordinates.y", "creationDate",
-                "area", "population", "metersAboveSeaLevel", "carCode", "climate",
-                "standardOfLiving", "governor.name", "governor.age", "governor.height", "governor.birthday"
-        );
 
         for (String sortField : sortFields) {
             boolean isDescending = sortField.startsWith("-");
             String fieldName = isDescending ? sortField.substring(1) : sortField;
-
-            if (!validFields.contains(fieldName)) {
-                throw new BadRequestException("Недопустимое поле для сортировки: " + fieldName);
-            }
 
             orders.add(isDescending ?
                     Sort.Order.desc(fieldName) :

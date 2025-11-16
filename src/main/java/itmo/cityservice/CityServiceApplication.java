@@ -9,7 +9,7 @@ import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @SpringBootApplication
-public class CityServiceApplication extends SpringBootServletInitializer {
+public class CityServiceApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(CityServiceApplication.class, args);
@@ -27,10 +27,5 @@ public class CityServiceApplication extends SpringBootServletInitializer {
                         .allowCredentials(false);
             }
         };
-    }
-
-    @Override
-    protected SpringApplicationBuilder configure(SpringApplicationBuilder application) {
-        return application.sources(CityServiceApplication.class);
     }
 }

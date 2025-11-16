@@ -329,7 +329,7 @@ const parseGovernorElement = (governorElement) => {
       alert(`Суммарное население: ${sumValue || 'Неизвестно'}`);
     } catch (err) {
       if (err.response?.status === 401) {
-        setError('Неверные учетные данные для сервиса геноцида.');
+        setError('Неверные учетные данные для сервиса популяции.');
         setShowAuthForm(true);
       } else {
         setError(`Ошибка расчета суммы: ${err.message}`);
@@ -356,7 +356,7 @@ const parseGovernorElement = (governorElement) => {
       fetchCities();
     } catch (err) {
       if (err.response?.status === 401) {
-        setError('Неверные учетные данные для сервиса геноцида.');
+        setError('Неверные учетные данные для сервиса популяции.');
         setShowAuthForm(true);
       } else {
         setError(`Ошибка депортации: ${err.message}`);
@@ -450,7 +450,7 @@ const parseGovernorElement = (governorElement) => {
           </button>
 
           <button onClick={() => setShowGenocideForm(!showGenocideForm)}>
-            {showGenocideForm ? 'Скрыть геноцид' : 'Геноцид'}
+            {showGenocideForm ? 'Скрыть популяцию' : 'Популяция'}
           </button>
 
           <div className="filters">
@@ -598,7 +598,7 @@ const parseGovernorElement = (governorElement) => {
         {/* Форма геноцида */}
         {showGenocideForm && (
           <div className="form-container">
-            <h2>Геноцидные операции</h2>
+            <h2>Операции с популяцией</h2>
 
             <div className="genocide-section">
               <h3>Рассчитать сумму населения</h3>
