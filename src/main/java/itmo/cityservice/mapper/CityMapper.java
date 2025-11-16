@@ -8,6 +8,7 @@ import itmo.cityservice.model.entity.City;
 import itmo.cityservice.model.entity.Coordinates;
 import itmo.cityservice.model.entity.Human;
 import org.springframework.stereotype.Component;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -66,8 +67,12 @@ public class CityMapper {
         }
 
         CoordinatesDto dto = new CoordinatesDto();
-        dto.setX(coordinates.getX());
-        dto.setY(coordinates.getY());
+        if (coordinates.getX() != null) {
+            dto.setX(BigDecimal.valueOf(coordinates.getX()));
+        }
+        if (coordinates.getY() != null) {
+            dto.setY(BigDecimal.valueOf(coordinates.getY()));
+        }
 
         return dto;
     }
@@ -78,8 +83,12 @@ public class CityMapper {
         }
 
         Coordinates coordinates = new Coordinates();
-        coordinates.setX(dto.getX());
-        coordinates.setY(dto.getY());
+        if (dto.getX() != null) {
+            coordinates.setX(dto.getX().doubleValue());
+        }
+        if (dto.getY() != null) {
+            coordinates.setY(dto.getY().doubleValue());
+        }
 
         return coordinates;
     }
@@ -129,8 +138,13 @@ public class CityMapper {
             if (existingCity.getCoordinates() == null) {
                 existingCity.setCoordinates(new Coordinates());
             }
-            existingCity.getCoordinates().setX(dto.getCoordinates().getX());
-            existingCity.getCoordinates().setY(dto.getCoordinates().getY());
+            Coordinates coordinates = existingCity.getCoordinates();
+            if (dto.getCoordinates().getX() != null) {
+                coordinates.setX(dto.getCoordinates().getX().doubleValue());
+            }
+            if (dto.getCoordinates().getY() != null) {
+                coordinates.setY(dto.getCoordinates().getY().doubleValue());
+            }
         }
 
         if (dto.getGovernor() != null) {

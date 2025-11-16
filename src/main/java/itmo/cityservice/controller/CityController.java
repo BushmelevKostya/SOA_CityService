@@ -34,53 +34,27 @@ public class CityController {
     }
 
     @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_XML_VALUE)
-    public ResponseEntity<?> getCityById(@PathVariable Long id) {
-        try {
-            CityDto city = cityService.getCityById(id);
-            return ResponseEntity.ok(city);
-        } catch (NotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (BadRequestException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<CityDto> getCityById(@PathVariable Long id) {
+        CityDto city = cityService.getCityById(id);
+        return ResponseEntity.ok(city);
     }
 
     @PostMapping(produces = MediaType.APPLICATION_XML_VALUE, consumes = MediaType.APPLICATION_XML_VALUE)
-    public ResponseEntity<?> createCity(@RequestBody CityCreateRequestDto cityDto) {
-        try {
-            CityDto createdCity = cityService.createCity(cityDto);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdCity);
-        } catch (ValidationException e) {
-            return ResponseEntity.unprocessableEntity().body(e.getMessage());
-        } catch (BadRequestException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<CityDto> createCity(@RequestBody CityCreateRequestDto cityDto) {
+        CityDto createdCity = cityService.createCity(cityDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdCity);
     }
 
     @PutMapping(value = "/{id}", produces = MediaType.APPLICATION_XML_VALUE, consumes = MediaType.APPLICATION_XML_VALUE)
-    public ResponseEntity<?> updateCity(@PathVariable Long id, @RequestBody CityCreateRequestDto cityDto) {
-        try {
-            CityDto updatedCity = cityService.updateCity(id, cityDto);
-            return ResponseEntity.ok(updatedCity);
-        } catch (NotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (ValidationException e) {
-            return ResponseEntity.unprocessableEntity().body(e.getMessage());
-        } catch (BadRequestException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<CityDto> updateCity(@PathVariable Long id, @RequestBody CityCreateRequestDto cityDto) {
+        CityDto updatedCity = cityService.updateCity(id, cityDto);
+        return ResponseEntity.ok(updatedCity);
     }
 
     @DeleteMapping(value = "/{id}", produces = MediaType.APPLICATION_XML_VALUE)
-    public ResponseEntity<?> deleteCity(@PathVariable Long id) {
-        try {
-            cityService.deleteCity(id);
-            return ResponseEntity.noContent().build();
-        } catch (NotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (BadRequestException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<Void> deleteCity(@PathVariable Long id) {
+        cityService.deleteCity(id);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping(value = "/sea-level", produces = MediaType.APPLICATION_XML_VALUE)
@@ -91,22 +65,14 @@ public class CityController {
     }
 
     @GetMapping(value = "/car-code/avg", produces = MediaType.APPLICATION_XML_VALUE)
-    public ResponseEntity<?> getAverageCarCode() {
-        try {
-            AverageResultDto result = cityService.getAverageCarCode();
-            return ResponseEntity.ok(result);
-        } catch (NotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+    public ResponseEntity<AverageResultDto> getAverageCarCode() {
+        AverageResultDto result = cityService.getAverageCarCode();
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping(value = "/name/min", produces = MediaType.APPLICATION_XML_VALUE)
-    public ResponseEntity<?> getCityWithMinName() {
-        try {
-            CityDto city = cityService.getCityWithMinName();
-            return ResponseEntity.ok(city);
-        } catch (NotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        }
+    public ResponseEntity<CityDto> getCityWithMinName() {
+        CityDto city = cityService.getCityWithMinName();
+        return ResponseEntity.ok(city);
     }
 }

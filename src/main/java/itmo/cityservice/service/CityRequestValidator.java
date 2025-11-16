@@ -4,6 +4,8 @@ import itmo.cityservice.exception.BadRequestException;
 import itmo.cityservice.exception.ValidationException;
 import itmo.cityservice.model.dto.CityCreateRequestDto;
 import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
 
@@ -69,9 +71,15 @@ public class CityRequestValidator {
         if (dto.getCoordinates() == null) {
             throw new ValidationException("Координаты обязательны");
         } else {
-            if (dto.getCoordinates().getX() == null || dto.getCoordinates().getX() <= -190) {
+            if (dto.getCoordinates().getX() == null) {
+                throw new ValidationException("Координата X обязательна");
+            }
+
+            BigDecimal minValue = new BigDecimal("-190");
+            if (dto.getCoordinates().getX().compareTo(minValue) <= 0) {
                 throw new ValidationException("Координата X должна быть больше -190");
             }
+
             if (dto.getCoordinates().getY() == null) {
                 throw new ValidationException("Координата Y обязательна");
             }

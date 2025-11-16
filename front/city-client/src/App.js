@@ -55,17 +55,13 @@ function App() {
   };
 
 
-
-// Замените функцию parseXML на более надежную:
 const parseXML = (xmlString) => {
   return new Promise((resolve, reject) => {
     try {
-      // Удаляем BOM и лишние символы
       const cleanXml = xmlString.trim();
       const parser = new DOMParser();
       const xmlDoc = parser.parseFromString(cleanXml, "text/xml");
 
-      // Проверяем на ошибки парсинга
       const parserError = xmlDoc.querySelector('parsererror');
       if (parserError) {
         console.error('XML Parse Error:', parserError.textContent);
@@ -646,12 +642,29 @@ const parseGovernorElement = (governorElement) => {
           </div>
         )}
 
-        {/* Таблица городов */}
         <div className="table-container">
           {loading ? (
             <div>Загрузка...</div>
           ) : (
             <>
+              <div className="table-controls">
+                <div className="page-size-control">
+                  <label>Городов на странице: </label>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => {
+                      setPageSize(Number(e.target.value));
+                      setPage(1); // Сброс на первую страницу при изменении размера
+                    }}
+                  >
+                    <option value={5}>5</option>
+                    <option value={10}>10</option>
+                    <option value={20}>20</option>
+                    <option value={50}>50</option>
+                  </select>
+                </div>
+              </div>
+
               <table className="cities-table">
                 <thead>
                   <tr>
@@ -669,7 +682,15 @@ const parseGovernorElement = (governorElement) => {
                   {cities.map((city) => (
                     <tr key={city.id}>
                       <td>{city.id}</td>
-                      <td>{city.name}</td>
+                      <td>
+                        {city.name && city.name.length > 50 ? (
+                          <span title={city.name}>
+                            {city.name.substring(0, 47)}...
+                          </span>
+                        ) : (
+                          city.name
+                        )}
+                      </td>
                       <td>({city.coordinates?.x}, {city.coordinates?.y})</td>
                       <td>{city.area}</td>
                       <td>{city.population}</td>

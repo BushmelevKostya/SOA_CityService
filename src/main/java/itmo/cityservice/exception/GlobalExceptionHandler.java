@@ -52,6 +52,9 @@ public class GlobalExceptionHandler {
 
     private ResponseEntity<String> buildXmlResponse(String message, HttpStatus status) {
         String body = "<message>" + message + "</message>";
-        return new ResponseEntity<>(body, status);
+
+        return ResponseEntity.status(status)
+                .header("Content-Type", "text/plain;charset=UTF-8")
+                .body(body);
     }
 }

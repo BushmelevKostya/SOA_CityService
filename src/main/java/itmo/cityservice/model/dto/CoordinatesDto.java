@@ -1,26 +1,36 @@
 package itmo.cityservice.model.dto;
 
+import itmo.cityservice.service.BigDecimalXmlAdapter;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import java.math.BigDecimal;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 public class CoordinatesDto {
-    private Double x;
-    private Double y;
+    @XmlElement
+    @XmlJavaTypeAdapter(BigDecimalXmlAdapter.class)
+    private BigDecimal x;
 
-    public Double getX() {
+    @XmlElement
+    @XmlJavaTypeAdapter(BigDecimalXmlAdapter.class)
+    private BigDecimal y;
+
+    // геттеры и сеттеры
+    public BigDecimal getX() {
         return x;
     }
 
-    public void setX(Double x) {
+    public void setX(BigDecimal x) {
         this.x = x;
     }
 
-    public Double getY() {
+    public BigDecimal getY() {
         return y;
     }
 
-    public void setY(Double y) {
+    public void setY(BigDecimal y) {
         this.y = y;
     }
 }
