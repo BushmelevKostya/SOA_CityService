@@ -31,7 +31,6 @@ repositories {
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web-services")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-	implementation("org.springframework.boot:spring-boot-starter-data-rest")
 	implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-web") {
         exclude(group = "ch.qos.logback", module = "logback-classic")
