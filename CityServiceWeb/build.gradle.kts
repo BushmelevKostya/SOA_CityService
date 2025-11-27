@@ -1,11 +1,7 @@
-import org.springframework.boot.gradle.tasks.bundling.BootWar
-
 plugins {
-	java
-	war
-	id("org.springframework.boot") version "3.5.6"
-	id("io.spring.dependency-management") version "1.1.7"
-	id("org.openapi.generator") version "7.0.0"
+    java
+    war
+    id("org.openapi.generator") version "7.0.0"
 }
 
 group = "itmo"
@@ -13,116 +9,52 @@ version = "0.0.1-SNAPSHOT"
 description = "CityServiceWeb"
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
-	}
-}
-
-configurations {
-	compileOnly {
-		extendsFrom(configurations.annotationProcessor.get())
-	}
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
 dependencies {
-	// EJB модуль
-	implementation(project(":CityServiceEJB"))
-	compileOnly(project(":CityServiceEJB"))
-	
-	// Jakarta EE API для EJB (на этапе компиляции, рантайм даёт контейнер)
-	compileOnly("jakarta.ejb:jakarta.ejb-api:4.0.1")
-	compileOnly("jakarta.inject:jakarta.inject-api:2.0.1")
-	
-    implementation("org.springframework.boot:spring-boot-starter-web-services")
-	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-	implementation("org.springframework.boot:spring-boot-starter-security")
-    implementation("org.springframework.boot:spring-boot-starter-web") {
-        exclude(group = "ch.qos.logback", module = "logback-classic")
-        exclude(group = "ch.qos.logback", module = "logback-core")
-    }
-	implementation("org.springframework.boot:spring-boot-starter-validation")
-	implementation("org.openapitools:jackson-databind-nullable:0.2.6")
-	implementation("io.swagger:swagger-annotations:1.6.8")
-	implementation("javax.annotation:javax.annotation-api:1.3.2")
+    // EJB
+    implementation(project(":CityServiceEJB"))
 
-	implementation("jakarta.xml.bind:jakarta.xml.bind-api:4.0.0")
-	implementation("org.glassfish.jaxb:jaxb-runtime:4.0.3")
-	implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml")
-    implementation ("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+    // Java EE
+    compileOnly("jakarta.ws.rs:jakarta.ws.rs-api:3.1.0")
+    compileOnly("jakarta.ejb:jakarta.ejb-api:4.0.1")
+    compileOnly("jakarta.servlet:jakarta.servlet-api:5.0.0")
+    compileOnly("jakarta.xml.bind:jakarta.xml.bind-api:4.0.0")
 
-	implementation("org.mapstruct:mapstruct:1.5.5.Final")
-	annotationProcessor("org.mapstruct:mapstruct-processor:1.5.5.Final")
-	implementation("org.yaml:snakeyaml:2.2")
-	compileOnly("org.projectlombok:lombok")
-	developmentOnly("org.springframework.boot:spring-boot-devtools")
-	runtimeOnly("org.postgresql:postgresql")
-	annotationProcessor("org.projectlombok:lombok")
-	providedRuntime("org.springframework.boot:spring-boot-starter-tomcat")
-	testImplementation("org.springframework.boot:spring-boot-starter-test")
-	testImplementation("org.springframework.security:spring-security-test")
-	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    implementation("io.swagger:swagger-annotations:1.6.8")
 }
 
 openApiGenerate {
-	generatorName.set("spring")
-	inputSpec.set("$projectDir/src/main/resources/CityService.yaml")
-	outputDir.set("$buildDir/generated")
-	apiPackage.set("itmo.cityservice.api")
-	modelPackage.set("itmo.cityservice.model")
-	invokerPackage.set("itmo.cityservice")
-	configOptions.set(mapOf(
-		"interfaceOnly" to "false",
-		"useSpringBoot3" to "true",
-		"useTags" to "true",
-		"dateLibrary" to "java8",
-		"serializableModel" to "true",
-		"useBeanValidation" to "true",
-		"performBeanValidation" to "true",
-		"useOptional" to "true",
-		"openApiNullable" to "false",
-		"library" to "spring-boot",
-		"generateSupportingFiles" to "true",
-		"skipDefaultInterface" to "false",
-		"documentationProvider" to "none",
-		"unhandledException" to "true",
-		"useResponseEntity" to "true",
-		"useSpringController" to "true",
-		"useSwaggerUI" to "true",
-		"additionalModelTypeAnnotations" to "@jakarta.xml.bind.annotation.XmlRootElement"
-	))
-	globalProperties.set(mapOf(
-		"apis" to "",
-		"models" to "",
-		"supportingFiles" to "ApiUtil.java,configuration/OpenAPIDocumentationConfig.java"
-	))
+    generatorName.set("jaxrs-spec")
+    inputSpec.set("$projectDir/src/main/resources/CityService.yaml")
+    outputDir.set("$buildDir/generated")
+    apiPackage.set("itmo.cityservice.api")
+    modelPackage.set("itmo.cityservice.model")
+    configOptions.set(mapOf(
+        "interfaceOnly" to "true",
+        "useSwaggerAnnotations" to "true",
+        "generateBuilders" to "true",
+        "useBeanValidation" to "true",
+        "withXml" to "true"
+    ))
 }
 
 sourceSets {
-	main {
-		java {
-			srcDirs("src/main/java", "${layout.buildDirectory.get()}/generated/src/main/java")
-		}
-	}
+    main {
+        java {
+            srcDirs("src/main/java", "${layout.buildDirectory.get()}/generated/src/main/java")
+        }
+    }
 }
-
-tasks.named<BootWar>("bootWar") {
-    enabled = true
-    archiveClassifier.set("boot")
-}
-
 
 tasks.named<War>("war") {
     enabled = true
     archiveClassifier.set("")
 }
-
-tasks {
-	withType<Test> {
-		useJUnitPlatform()
-	}
-}
-

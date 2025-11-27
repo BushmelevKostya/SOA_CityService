@@ -7,11 +7,13 @@ import itmo.cityservice.ejb.model.dto.HumanDto;
 import itmo.cityservice.ejb.model.entity.City;
 import itmo.cityservice.ejb.model.entity.Coordinates;
 import itmo.cityservice.ejb.model.entity.Human;
+import jakarta.ejb.Stateless;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CityMapper {
+@Stateless
+public class CityMapperBean {
 
     public CityDto toDto(City city) {
         if (city == null) {
@@ -157,4 +159,3 @@ public class CityMapper {
         }
     }
 }
-

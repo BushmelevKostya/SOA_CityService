@@ -3,17 +3,18 @@ package itmo.cityservice.ejb.service;
 import itmo.cityservice.ejb.exception.BadRequestException;
 import itmo.cityservice.ejb.exception.ValidationException;
 import itmo.cityservice.ejb.model.dto.CityCreateRequestDto;
-
+import jakarta.ejb.Stateless;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
 
-public class CityRequestValidator {
+@Stateless
+public class CityValidatorBean {
 
     private static final Set<String> VALID_SORT_FIELDS = Set.of(
-        "id", "name", "coordinates.x", "coordinates.y", "creationDate",
-        "area", "population", "metersAboveSeaLevel", "carCode", "climate",
-        "standardOfLiving", "governor.name", "governor.age", "governor.height", "governor.birthday"
+            "id", "name", "coordinates.x", "coordinates.y", "creationDate",
+            "area", "population", "metersAboveSeaLevel", "carCode", "climate",
+            "standardOfLiving", "governor.name", "governor.age", "governor.height", "governor.birthday"
     );
 
     public void validatePaginationParams(int page, int pageSize) {
@@ -55,7 +56,6 @@ public class CityRequestValidator {
             throw new BadRequestException("Фильтр слишком длинный");
         }
     }
-
 
     public void validateCityCreateRequest(CityCreateRequestDto dto) {
         if (dto == null) {
@@ -114,4 +114,3 @@ public class CityRequestValidator {
         }
     }
 }
-

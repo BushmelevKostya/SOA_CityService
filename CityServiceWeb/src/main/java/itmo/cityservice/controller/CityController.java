@@ -1,75 +1,156 @@
 package itmo.cityservice.controller;
 
+import itmo.cityservice.ejb.business.CityBusinessServiceRemote;
 import itmo.cityservice.ejb.model.dto.*;
-import itmo.cityservice.service.CityService;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.ejb.EJB;
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 import java.util.List;
 
-@RestController
-@RequestMapping("/api/v1/cities")
-@XmlRootElement
+@Path("/cities")
+@Produces(MediaType.APPLICATION_XML)
+@Consumes(MediaType.APPLICATION_XML)
 public class CityController {
-    private final CityService cityService;
 
-    public CityController(CityService cityService) {
-        this.cityService = cityService;
+    @EJB
+    private CityBusinessServiceRemote cityService;
+
+    @GET
+    public Response getCities(
+            @QueryParam("sort") List<String> sort,
+            @QueryParam("page") @DefaultValue("1") int page,
+            @QueryParam("pageSize") @DefaultValue("10") int pageSize,
+            @QueryParam("filter") String filter) {
+
+        try {
+            CitiesResponseDto response = cityService.getCities(sort, page, pageSize, filter);
+            return Response.ok(response).build();
+        } catch (itmo.cityservice.ejb.exception.BadRequestException e) {
+            ErrorResponse error = new ErrorResponse("Ошибка в url запроса");
+            return Response.status(Response.Status.BAD_REQUEST).entity(error).build();
+        } catch (Exception e) {
+            ErrorResponse error = new ErrorResponse("Ошибка сервера");
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(error).build();
+        }
     }
 
-    @GetMapping(produces = MediaType.APPLICATION_XML_VALUE)
-    public ResponseEntity<CitiesResponseDto> getCities(
-            @RequestParam(required = false) List<String> sort,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int pageSize,
-            @RequestParam(required = false) String filter) {
-
-        CitiesResponseDto response = cityService.getCities(sort, page, pageSize, filter);
-        return ResponseEntity.ok(response);
+    @GET
+    @Path("/{id}")
+    public Response getCityById(@PathParam("id") Long id) {
+        try {
+            CityDto city = cityService.getCityById(id);
+            return Response.ok(city).build();
+        } catch (itmo.cityservice.ejb.exception.NotFoundException e) {
+            ErrorResponse error = new ErrorResponse("Объект не найден");
+            return Response.status(Response.Status.NOT_FOUND).entity(error).build();
+        } catch (itmo.cityservice.ejb.exception.BadRequestException e) {
+            ErrorResponse error = new ErrorResponse("Ошибка в url запроса");
+            return Response.status(Response.Status.BAD_REQUEST).entity(error).build();
+        } catch (Exception e) {
+            ErrorResponse error = new ErrorResponse("Ошибка сервера");
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(error).build();
+        }
     }
 
-    @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_XML_VALUE)
-    public ResponseEntity<CityDto> getCityById(@PathVariable Long id) {
-        CityDto city = cityService.getCityById(id);
-        return ResponseEntity.ok(city);
+    @POST
+    public Response createCity(CityCreateRequestDto dto) {
+        try {
+            CityDto createdCity = cityService.createCity(dto);
+            return Response.status(Response.Status.CREATED).entity(createdCity).build();
+        } catch (itmo.cityservice.ejb.exception.ValidationException e) {
+            ErrorResponse error = new ErrorResponse("Ошибка валидации тела запроса");
+            return Response.status(Response.Status.BAD_REQUEST).entity(error).build();
+        } catch (itmo.cityservice.ejb.exception.BadRequestException e) {
+            ErrorResponse error = new ErrorResponse("Ошибка в url запроса");
+            return Response.status(Response.Status.BAD_REQUEST).entity(error).build();
+        } catch (Exception e) {
+            ErrorResponse error = new ErrorResponse("Ошибка сервера");
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(error).build();
+        }
     }
 
-    @PostMapping(produces = MediaType.APPLICATION_XML_VALUE, consumes = MediaType.APPLICATION_XML_VALUE)
-    public ResponseEntity<CityDto> createCity(@RequestBody CityCreateRequestDto cityDto) {
-        CityDto createdCity = cityService.createCity(cityDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdCity);
+    @PUT
+    @Path("/{id}")
+    public Response updateCity(@PathParam("id") Long id, CityCreateRequestDto dto) {
+        try {
+            CityDto updatedCity = cityService.updateCity(id, dto);
+            return Response.ok(updatedCity).build();
+        } catch (itmo.cityservice.ejb.exception.NotFoundException e) {
+            ErrorResponse error = new ErrorResponse("Объект не найден");
+            return Response.status(Response.Status.NOT_FOUND).entity(error).build();
+        } catch (itmo.cityservice.ejb.exception.ValidationException e) {
+            ErrorResponse error = new ErrorResponse("Ошибка валидации тела запроса");
+            return Response.status(Response.Status.BAD_REQUEST).entity(error).build();
+        } catch (itmo.cityservice.ejb.exception.BadRequestException e) {
+            ErrorResponse error = new ErrorResponse("Ошибка в url запроса");
+            return Response.status(Response.Status.BAD_REQUEST).entity(error).build();
+        } catch (Exception e) {
+            ErrorResponse error = new ErrorResponse("Ошибка сервера");
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(error).build();
+        }
     }
 
-    @PutMapping(value = "/{id}", produces = MediaType.APPLICATION_XML_VALUE, consumes = MediaType.APPLICATION_XML_VALUE)
-    public ResponseEntity<CityDto> updateCity(@PathVariable Long id, @RequestBody CityCreateRequestDto cityDto) {
-        CityDto updatedCity = cityService.updateCity(id, cityDto);
-        return ResponseEntity.ok(updatedCity);
+    @DELETE
+    @Path("/{id}")
+    public Response deleteCity(@PathParam("id") Long id) {
+        try {
+            cityService.deleteCity(id);
+            return Response.noContent().build();
+        } catch (itmo.cityservice.ejb.exception.NotFoundException e) {
+            ErrorResponse error = new ErrorResponse("Объект не найден");
+            return Response.status(Response.Status.NOT_FOUND).entity(error).build();
+        } catch (itmo.cityservice.ejb.exception.BadRequestException e) {
+            ErrorResponse error = new ErrorResponse("Ошибка в url запроса");
+            return Response.status(Response.Status.BAD_REQUEST).entity(error).build();
+        } catch (Exception e) {
+            ErrorResponse error = new ErrorResponse("Ошибка сервера");
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(error).build();
+        }
     }
 
-    @DeleteMapping(value = "/{id}", produces = MediaType.APPLICATION_XML_VALUE)
-    public ResponseEntity<Void> deleteCity(@PathVariable Long id) {
-        cityService.deleteCity(id);
-        return ResponseEntity.noContent().build();
+    @DELETE
+    @Path("/sea-level")
+    public Response deleteCitiesBySeaLevel(@QueryParam("metersAboveSeaLevel") Double metersAboveSeaLevel) {
+        try {
+            DeleteResultDto result = cityService.deleteCitiesBySeaLevel(metersAboveSeaLevel);
+            return Response.ok(result).build();
+        } catch (itmo.cityservice.ejb.exception.BadRequestException e) {
+            ErrorResponse error = new ErrorResponse("Ошибка в url запроса");
+            return Response.status(Response.Status.BAD_REQUEST).entity(error).build();
+        } catch (Exception e) {
+            ErrorResponse error = new ErrorResponse("Ошибка сервера");
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(error).build();
+        }
     }
 
-    @DeleteMapping(value = "/sea-level", produces = MediaType.APPLICATION_XML_VALUE)
-    public ResponseEntity<DeleteResultDto> deleteCitiesBySeaLevel(
-            @RequestParam Double metersAboveSeaLevel) {
-        DeleteResultDto result = cityService.deleteCitiesBySeaLevel(metersAboveSeaLevel);
-        return ResponseEntity.ok(result);
+    @GET
+    @Path("/car-code/avg")
+    public Response getAverageCarCode() {
+        try {
+            AverageResultDto result = cityService.getAverageCarCode();
+            return Response.ok(result).build();
+        } catch (itmo.cityservice.ejb.exception.NotFoundException e) {
+            ErrorResponse error = new ErrorResponse("Объект не найден");
+            return Response.status(Response.Status.NOT_FOUND).entity(error).build();
+        } catch (Exception e) {
+            ErrorResponse error = new ErrorResponse("Ошибка сервера");
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(error).build();
+        }
     }
 
-    @GetMapping(value = "/car-code/avg", produces = MediaType.APPLICATION_XML_VALUE)
-    public ResponseEntity<AverageResultDto> getAverageCarCode() {
-        AverageResultDto result = cityService.getAverageCarCode();
-        return ResponseEntity.ok(result);
-    }
-
-    @GetMapping(value = "/name/min", produces = MediaType.APPLICATION_XML_VALUE)
-    public ResponseEntity<CityDto> getCityWithMinName() {
-        CityDto city = cityService.getCityWithMinName();
-        return ResponseEntity.ok(city);
+    @GET
+    @Path("/name/min")
+    public Response getCityWithMinName() {
+        try {
+            CityDto city = cityService.getCityWithMinName();
+            return Response.ok(city).build();
+        } catch (itmo.cityservice.ejb.exception.NotFoundException e) {
+            ErrorResponse error = new ErrorResponse("Объект не найден");
+            return Response.status(Response.Status.NOT_FOUND).entity(error).build();
+        } catch (Exception e) {
+            ErrorResponse error = new ErrorResponse("Ошибка сервера");
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(error).build();
+        }
     }
 }

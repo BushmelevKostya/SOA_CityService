@@ -1,9 +1,11 @@
 package itmo.cityservice.ejb.business;
 
 import itmo.cityservice.ejb.model.dto.*;
+import jakarta.ejb.Remote;
 
 import java.util.List;
 
+@Remote
 public interface CityBusinessServiceRemote {
     CitiesResponseDto getCities(List<String> sort, int page, int pageSize, String filter);
     
