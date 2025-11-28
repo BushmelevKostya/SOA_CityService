@@ -4,19 +4,41 @@ import itmo.cityservice.ejb.model.entity.Climate;
 import itmo.cityservice.ejb.model.entity.StandardOfLiving;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
+
+import java.io.Serializable;
 
 @XmlRootElement(name = "CityCreateRequest")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class CityCreateRequestDto {
+public class CityCreateRequestDto implements Serializable {
+    private static final long serialVersionUID = 1L;
+    
+    @XmlElement(required = true)
     private String name;
+
+    @XmlElement(required = true)
     private CoordinatesDto coordinates;
+
+    @XmlElement(required = true)
     private Integer area;
+
+    @XmlElement(required = true)
     private Integer population;
+
+    @XmlElement
     private Double metersAboveSeaLevel;
+
+    @XmlElement(required = true)
     private Integer carCode;
+
+    @XmlElement(required = true)
     private Climate climate;
+
+    @XmlElement
     private StandardOfLiving standardOfLiving;
+
+    @XmlElement(required = true)
     private HumanDto governor;
 
     public String getName() {

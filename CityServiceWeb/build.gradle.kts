@@ -27,7 +27,7 @@ dependencies {
     compileOnly("jakarta.ejb:jakarta.ejb-api:4.0.1")
     compileOnly("jakarta.servlet:jakarta.servlet-api:5.0.0")
     compileOnly("jakarta.xml.bind:jakarta.xml.bind-api:4.0.0")
-
+    implementation("org.glassfish.jaxb:jaxb-runtime:4.0.3")
     implementation("io.swagger:swagger-annotations:1.6.8")
 }
 

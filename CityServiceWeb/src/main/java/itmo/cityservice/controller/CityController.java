@@ -54,18 +54,19 @@ public class CityController {
     }
 
     @POST
-    public Response createCity(CityCreateRequestDto dto) {
+    public Response createCity(CityCreateRequestDto cityDto) {
         try {
-            CityDto createdCity = cityService.createCity(dto);
+            CityDto createdCity = cityService.createCity(cityDto);
             return Response.status(Response.Status.CREATED).entity(createdCity).build();
         } catch (itmo.cityservice.ejb.exception.ValidationException e) {
-            ErrorResponse error = new ErrorResponse("Ошибка валидации тела запроса");
+            ErrorResponse error = new ErrorResponse(e.getMessage());
             return Response.status(Response.Status.BAD_REQUEST).entity(error).build();
         } catch (itmo.cityservice.ejb.exception.BadRequestException e) {
-            ErrorResponse error = new ErrorResponse("Ошибка в url запроса");
+            ErrorResponse error = new ErrorResponse(e.getMessage());
             return Response.status(Response.Status.BAD_REQUEST).entity(error).build();
         } catch (Exception e) {
-            ErrorResponse error = new ErrorResponse("Ошибка сервера");
+            e.printStackTrace();
+            ErrorResponse error = new ErrorResponse("Внутренняя ошибка сервера: " + e.getMessage());
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(error).build();
         }
     }

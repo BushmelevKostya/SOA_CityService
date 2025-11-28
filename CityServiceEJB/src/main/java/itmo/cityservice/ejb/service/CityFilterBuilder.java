@@ -4,45 +4,58 @@ import itmo.cityservice.ejb.exception.BadRequestException;
 import itmo.cityservice.ejb.model.entity.City;
 import itmo.cityservice.ejb.model.entity.Climate;
 import itmo.cityservice.ejb.model.entity.StandardOfLiving;
-import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.*;
 import java.time.*;
 import java.util.*;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 
-public class CityFilterSpecificationBuilder {
+public class CityFilterBuilder {
 
-    public static Specification<City> build(String filter) {
-        return (root, query, criteriaBuilder) -> {
-            if (filter == null || filter.isEmpty()) {
-                return criteriaBuilder.conjunction();
-            }
+    public static class FilterCriteria {
+        private final String field;
+        private final String operator;
+        private final String value;
 
-            try {
-                List<FilterParam> filterParams = parseFilterParams(filter);
-                List<Predicate> predicates = new ArrayList<>();
+        public FilterCriteria(String field, String operator, String value) {
+            this.field = field;
+            this.operator = operator;
+            this.value = value;
+        }
 
-                for (FilterParam param : filterParams) {
-                    validateFilterFieldName(param.getField());
-                    Predicate predicate = createPredicate(root, criteriaBuilder, param.getField(), param.getOperator(), param.getValue());
-                    if (predicate != null) {
-                        predicates.add(predicate);
-                    }
-                }
-
-                return predicates.isEmpty()
-                        ? criteriaBuilder.conjunction()
-                        : criteriaBuilder.and(predicates.toArray(new Predicate[0]));
-
-            } catch (IllegalArgumentException e) {
-                throw new BadRequestException("Invalid filter format: " + e.getMessage());
-            }
-        };
+        public String getField() { return field; }
+        public String getOperator() { return operator; }
+        public String getValue() { return value; }
     }
 
-    private static List<FilterParam> parseFilterParams(String filter) {
-        List<FilterParam> params = new ArrayList<>();
+    public static Predicate build(Root<City> root, CriteriaQuery<?> query, CriteriaBuilder cb, String filter) {
+        if (filter == null || filter.isEmpty()) {
+            return cb.conjunction();
+        }
+
+        try {
+            List<FilterCriteria> filterParams = parseFilterParams(filter);
+            List<Predicate> predicates = new ArrayList<>();
+
+            for (FilterCriteria param : filterParams) {
+                validateFilterFieldName(param.getField());
+                Predicate predicate = createPredicate(root, cb, param.getField(), param.getOperator(), param.getValue());
+                if (predicate != null) {
+                    predicates.add(predicate);
+                }
+            }
+
+            return predicates.isEmpty()
+                    ? cb.conjunction()
+                    : cb.and(predicates.toArray(new Predicate[0]));
+
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("Invalid filter format: " + e.getMessage());
+        }
+    }
+
+    private static List<FilterCriteria> parseFilterParams(String filter) {
+        List<FilterCriteria> params = new ArrayList<>();
 
         String decodedFilter = URLDecoder.decode(filter, StandardCharsets.UTF_8);
 
@@ -51,7 +64,6 @@ public class CityFilterSpecificationBuilder {
         for (String pair : pairs) {
             try {
                 pair = pair.trim();
-
 
                 if (pair.contains("[") && pair.contains("]")) {
                     int openBracketPos = pair.indexOf('[');
@@ -62,7 +74,7 @@ public class CityFilterSpecificationBuilder {
                         String operator = pair.substring(openBracketPos + 1, closeBracketPos);
                         String value = pair.substring(closeBracketPos + 2); // после ]=
 
-                        params.add(new FilterParam(field, operator, value));
+                        params.add(new FilterCriteria(field, operator, value));
                     }
                 } else if (pair.contains(".") && pair.contains(":")) {
                     int dotPos = pair.indexOf('.');
@@ -73,7 +85,7 @@ public class CityFilterSpecificationBuilder {
                         String operator = pair.substring(dotPos + 1, colonPos);
                         String value = pair.substring(colonPos + 1);
 
-                        params.add(new FilterParam(field, operator, value));
+                        params.add(new FilterCriteria(field, operator, value));
                     }
                 }
             } catch (Exception e) {
@@ -147,7 +159,7 @@ public class CityFilterSpecificationBuilder {
         } else if (field.startsWith("governor.")) {
             String govField = field.substring("governor.".length());
             switch (govField) {
-                case "age": return Integer.class;
+                case "age": return Long.class;  // Изменил с Integer на Long
                 case "height": return Double.class;
                 case "birthday": return LocalDate.class;
                 default: return String.class;
@@ -156,9 +168,10 @@ public class CityFilterSpecificationBuilder {
 
         switch (field) {
             case "id":
+            case "carCode":
+                return Long.class;  // Изменил с Integer на Long
             case "area":
             case "population":
-            case "carCode":
                 return Integer.class;
             case "metersAboveSeaLevel":
             case "coordinates.x":
@@ -166,7 +179,7 @@ public class CityFilterSpecificationBuilder {
             case "governor.height":
                 return Double.class;
             case "creationDate":
-                return LocalDateTime.class;
+                return ZonedDateTime.class;  // Изменил с LocalDateTime на ZonedDateTime
             case "climate":
                 return Climate.class;
             case "standardOfLiving":
@@ -195,14 +208,16 @@ public class CityFilterSpecificationBuilder {
         }
 
         try {
-            if (targetType == Integer.class) {
+            if (targetType == Long.class) {
+                return Long.parseLong(value);
+            } else if (targetType == Integer.class) {
                 return Integer.parseInt(value);
             } else if (targetType == Double.class) {
                 return Double.parseDouble(value);
             } else if (targetType == LocalDate.class) {
                 return LocalDate.parse(value);
-            } else if (targetType == LocalDateTime.class) {
-                return LocalDateTime.parse(value);
+            } else if (targetType == ZonedDateTime.class) {  // Изменено
+                return ZonedDateTime.parse(value);
             } else if (targetType == Climate.class) {
                 return Climate.valueOf(value.toUpperCase());
             } else if (targetType == StandardOfLiving.class) {
@@ -227,29 +242,4 @@ public class CityFilterSpecificationBuilder {
                 .map(v -> convertValue(elementType, v))
                 .toArray();
     }
-
-    private static class FilterParam {
-        private final String field;
-        private final String operator;
-        private final String value;
-
-        public FilterParam(String field, String operator, String value) {
-            this.field = field;
-            this.operator = operator;
-            this.value = value;
-        }
-
-        public String getField() {
-            return field;
-        }
-
-        public String getOperator() {
-            return operator;
-        }
-
-        public String getValue() {
-            return value;
-        }
-    }
 }
-
