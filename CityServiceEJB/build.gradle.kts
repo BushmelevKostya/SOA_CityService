@@ -28,6 +28,7 @@ dependencies {
     implementation("org.glassfish.jaxb:jaxb-runtime:4.0.3")
     // JPA Implementation (Hibernate)
     implementation("org.hibernate.orm:hibernate-core:6.4.0.Final")
+    implementation("com.orbitz.consul:consul-client:1.5.3")
 }
 
 tasks.jar {

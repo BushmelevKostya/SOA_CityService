@@ -129,4 +129,19 @@ public class CityController {
             return Response.status(Response.Status.NOT_FOUND).entity(error).build();
         }
     }
+
+    @GET
+    @Path("/health")
+    @Produces(MediaType.APPLICATION_XML)
+    public Response healthCheck() {
+        try {
+            return Response.ok("<health><status>UP</status><service>city-service</service></health>")
+                    .build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.SERVICE_UNAVAILABLE)
+                    .entity("<health><status>DOWN</status><service>city-service</service></health>")
+                    .build();
+        }
+    }
+
 }
