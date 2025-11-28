@@ -29,9 +29,6 @@ public class CityController {
         } catch (itmo.cityservice.ejb.exception.BadRequestException e) {
             ErrorResponse error = new ErrorResponse("Ошибка в url запроса");
             return Response.status(Response.Status.BAD_REQUEST).entity(error).build();
-        } catch (Exception e) {
-            ErrorResponse error = new ErrorResponse("Ошибка сервера");
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(error).build();
         }
     }
 
@@ -47,9 +44,6 @@ public class CityController {
         } catch (itmo.cityservice.ejb.exception.BadRequestException e) {
             ErrorResponse error = new ErrorResponse("Ошибка в url запроса");
             return Response.status(Response.Status.BAD_REQUEST).entity(error).build();
-        } catch (Exception e) {
-            ErrorResponse error = new ErrorResponse("Ошибка сервера");
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(error).build();
         }
     }
 
@@ -64,10 +58,6 @@ public class CityController {
         } catch (itmo.cityservice.ejb.exception.BadRequestException e) {
             ErrorResponse error = new ErrorResponse(e.getMessage());
             return Response.status(Response.Status.BAD_REQUEST).entity(error).build();
-        } catch (Exception e) {
-            e.printStackTrace();
-            ErrorResponse error = new ErrorResponse("Внутренняя ошибка сервера: " + e.getMessage());
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(error).build();
         }
     }
 
@@ -86,9 +76,6 @@ public class CityController {
         } catch (itmo.cityservice.ejb.exception.BadRequestException e) {
             ErrorResponse error = new ErrorResponse("Ошибка в url запроса");
             return Response.status(Response.Status.BAD_REQUEST).entity(error).build();
-        } catch (Exception e) {
-            ErrorResponse error = new ErrorResponse("Ошибка сервера");
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(error).build();
         }
     }
 
@@ -104,9 +91,6 @@ public class CityController {
         } catch (itmo.cityservice.ejb.exception.BadRequestException e) {
             ErrorResponse error = new ErrorResponse("Ошибка в url запроса");
             return Response.status(Response.Status.BAD_REQUEST).entity(error).build();
-        } catch (Exception e) {
-            ErrorResponse error = new ErrorResponse("Ошибка сервера");
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(error).build();
         }
     }
 
@@ -119,9 +103,6 @@ public class CityController {
         } catch (itmo.cityservice.ejb.exception.BadRequestException e) {
             ErrorResponse error = new ErrorResponse("Ошибка в url запроса");
             return Response.status(Response.Status.BAD_REQUEST).entity(error).build();
-        } catch (Exception e) {
-            ErrorResponse error = new ErrorResponse("Ошибка сервера");
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(error).build();
         }
     }
 
@@ -134,9 +115,6 @@ public class CityController {
         } catch (itmo.cityservice.ejb.exception.NotFoundException e) {
             ErrorResponse error = new ErrorResponse("Объект не найден");
             return Response.status(Response.Status.NOT_FOUND).entity(error).build();
-        } catch (Exception e) {
-            ErrorResponse error = new ErrorResponse("Ошибка сервера");
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(error).build();
         }
     }
 
@@ -149,9 +127,6 @@ public class CityController {
         } catch (itmo.cityservice.ejb.exception.NotFoundException e) {
             ErrorResponse error = new ErrorResponse("Объект не найден");
             return Response.status(Response.Status.NOT_FOUND).entity(error).build();
-        } catch (Exception e) {
-            ErrorResponse error = new ErrorResponse("Ошибка сервера");
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(error).build();
         }
     }
 }

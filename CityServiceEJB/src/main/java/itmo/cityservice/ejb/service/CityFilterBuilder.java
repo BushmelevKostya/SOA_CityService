@@ -12,6 +12,25 @@ import java.nio.charset.StandardCharsets;
 
 public class CityFilterBuilder {
 
+    private static final Set<String> VALID_FILTER_FIELDS = new HashSet<>(Arrays.asList(
+            "id", "name", "coordinates.x", "coordinates.y", "creationDate",
+            "area", "population", "metersAboveSeaLevel", "carCode",
+            "climate", "standardOfLiving", "governor.name",
+            "governor.age", "governor.height", "governor.birthday"
+    ));
+
+    // Список допустимых полей для сортировки (включая с префиксом "-")
+    private static final Set<String> VALID_SORT_FIELDS = new HashSet<>(Arrays.asList(
+            "id", "name", "coordinates.x", "coordinates.y", "creationDate",
+            "area", "population", "metersAboveSeaLevel", "carCode",
+            "climate", "standardOfLiving", "governor.name",
+            "governor.age", "governor.height", "governor.birthday",
+            "-id", "-name", "-coordinates.x", "-coordinates.y", "-creationDate",
+            "-area", "-population", "-metersAboveSeaLevel", "-carCode",
+            "-climate", "-standardOfLiving", "-governor.name",
+            "-governor.age", "-governor.height", "-governor.birthday"
+    ));
+
     public static class FilterCriteria {
         private final String field;
         private final String operator;
@@ -26,6 +45,22 @@ public class CityFilterBuilder {
         public String getField() { return field; }
         public String getOperator() { return operator; }
         public String getValue() { return value; }
+    }
+
+    // Валидация полей сортировки
+    public static void validateSortFields(List<String> sortFields) {
+        if (sortFields == null || sortFields.isEmpty()) {
+            return;
+        }
+
+        for (String sortField : sortFields) {
+            if (!VALID_SORT_FIELDS.contains(sortField)) {
+                throw new BadRequestException(
+                        "Недопустимое поле для сортировки: " + sortField +
+                                ". Допустимые поля: " + String.join(", ", VALID_SORT_FIELDS)
+                );
+            }
+        }
     }
 
     public static Predicate build(Root<City> root, CriteriaQuery<?> query, CriteriaBuilder cb, String filter) {
@@ -57,6 +92,10 @@ public class CityFilterBuilder {
     private static List<FilterCriteria> parseFilterParams(String filter) {
         List<FilterCriteria> params = new ArrayList<>();
 
+        if (filter == null || filter.isEmpty()) {
+            return params;
+        }
+
         String decodedFilter = URLDecoder.decode(filter, StandardCharsets.UTF_8);
 
         String[] pairs = decodedFilter.split("&");
@@ -64,19 +103,9 @@ public class CityFilterBuilder {
         for (String pair : pairs) {
             try {
                 pair = pair.trim();
+                if (pair.isEmpty()) continue;
 
-                if (pair.contains("[") && pair.contains("]")) {
-                    int openBracketPos = pair.indexOf('[');
-                    int closeBracketPos = pair.indexOf(']');
-
-                    if (openBracketPos > 0 && closeBracketPos > openBracketPos && closeBracketPos < pair.length() - 1) {
-                        String field = pair.substring(0, openBracketPos);
-                        String operator = pair.substring(openBracketPos + 1, closeBracketPos);
-                        String value = pair.substring(closeBracketPos + 2); // после ]=
-
-                        params.add(new FilterCriteria(field, operator, value));
-                    }
-                } else if (pair.contains(".") && pair.contains(":")) {
+                if (pair.contains(".") && pair.contains(":")) {
                     int dotPos = pair.indexOf('.');
                     int colonPos = pair.indexOf(':');
 
@@ -86,8 +115,34 @@ public class CityFilterBuilder {
                         String value = pair.substring(colonPos + 1);
 
                         params.add(new FilterCriteria(field, operator, value));
+                        continue;
                     }
                 }
+
+                if (pair.contains("[") && pair.contains("]") && pair.contains("=")) {
+                    int openBracketPos = pair.indexOf('[');
+                    int closeBracketPos = pair.indexOf(']');
+                    int equalsPos = pair.indexOf('=');
+
+                    if (openBracketPos > 0 && closeBracketPos > openBracketPos && equalsPos > closeBracketPos) {
+                        String field = pair.substring(0, openBracketPos);
+                        String operator = pair.substring(openBracketPos + 1, closeBracketPos);
+                        String value = pair.substring(equalsPos + 1);
+
+                        params.add(new FilterCriteria(field, operator, value));
+                        continue;
+                    }
+                }
+
+                if (pair.contains("=") && !pair.contains("[") && !pair.contains(".")) {
+                    int equalsPos = pair.indexOf('=');
+                    if (equalsPos > 0) {
+                        String field = pair.substring(0, equalsPos);
+                        String value = pair.substring(equalsPos + 1);
+                        params.add(new FilterCriteria(field, "eq", value));
+                    }
+                }
+
             } catch (Exception e) {
                 throw new IllegalArgumentException("Invalid filter format: " + pair + ". Error: " + e.getMessage());
             }
@@ -95,18 +150,12 @@ public class CityFilterBuilder {
         return params;
     }
 
-    private static void validateFilterFieldName(String field) {
-        List<String> validFields = Arrays.asList(
-                "id", "name", "coordinates.x", "coordinates.y", "creationDate",
-                "area", "population", "metersAboveSeaLevel", "carCode",
-                "climate", "standardOfLiving", "governor.name",
-                "governor.age", "governor.height", "governor.birthday"
-        );
 
-        if (!validFields.contains(field)) {
+    private static void validateFilterFieldName(String field) {
+        if (!VALID_FILTER_FIELDS.contains(field)) {
             throw new IllegalArgumentException(
                     "Invalid filter field: " + field +
-                            ". Valid fields: " + String.join(", ", validFields)
+                            ". Valid fields: " + String.join(", ", VALID_FILTER_FIELDS)
             );
         }
     }
@@ -159,7 +208,7 @@ public class CityFilterBuilder {
         } else if (field.startsWith("governor.")) {
             String govField = field.substring("governor.".length());
             switch (govField) {
-                case "age": return Long.class;  // Изменил с Integer на Long
+                case "age": return Long.class;
                 case "height": return Double.class;
                 case "birthday": return LocalDate.class;
                 default: return String.class;
@@ -169,7 +218,7 @@ public class CityFilterBuilder {
         switch (field) {
             case "id":
             case "carCode":
-                return Long.class;  // Изменил с Integer на Long
+                return Long.class;
             case "area":
             case "population":
                 return Integer.class;
@@ -179,7 +228,7 @@ public class CityFilterBuilder {
             case "governor.height":
                 return Double.class;
             case "creationDate":
-                return ZonedDateTime.class;  // Изменил с LocalDateTime на ZonedDateTime
+                return ZonedDateTime.class;
             case "climate":
                 return Climate.class;
             case "standardOfLiving":
@@ -216,7 +265,7 @@ public class CityFilterBuilder {
                 return Double.parseDouble(value);
             } else if (targetType == LocalDate.class) {
                 return LocalDate.parse(value);
-            } else if (targetType == ZonedDateTime.class) {  // Изменено
+            } else if (targetType == ZonedDateTime.class) {
                 return ZonedDateTime.parse(value);
             } else if (targetType == Climate.class) {
                 return Climate.valueOf(value.toUpperCase());

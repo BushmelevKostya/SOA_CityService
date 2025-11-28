@@ -1,19 +1,23 @@
 package itmo.cityservice.ejb.business;
 
+import itmo.cityservice.ejb.exception.BadRequestException;
 import itmo.cityservice.ejb.model.dto.*;
 import itmo.cityservice.ejb.model.entity.City;
 import itmo.cityservice.ejb.repository.CityRepositoryBean;
 import itmo.cityservice.ejb.mapper.CityMapperBean;
+import itmo.cityservice.ejb.service.CityFilterBuilder;
 import itmo.cityservice.ejb.service.CityValidatorBean;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import jakarta.ejb.TransactionAttribute;
 import jakarta.ejb.TransactionAttributeType;
+import org.jboss.ejb3.annotation.Pool;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 
 @Stateless
+@Pool("slsb-strict-max-pool")
 public class CityBusinessServiceBean implements CityBusinessServiceRemote {
 
     @EJB
@@ -26,14 +30,20 @@ public class CityBusinessServiceBean implements CityBusinessServiceRemote {
     private CityValidatorBean validator;
 
     @Override
-    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public CitiesResponseDto getCities(List<String> sort, int page, int pageSize, String filter) {
-        validator.validatePaginationParams(page, pageSize);
-        validator.validateSortFields(sort);
-        validator.validateFilterParam(filter);
+        if (page < 1) {
+            throw new BadRequestException("Номер страницы должен быть больше 0");
+        }
+        if (pageSize < 1 || pageSize > 100) {
+            throw new BadRequestException("Размер страницы должен быть от 1 до 100");
+        }
 
-        List<City> cities = cityRepository.findAll(page - 1, pageSize);
-        long totalCities = cityRepository.count();
+        if (sort != null && !sort.isEmpty()) {
+            CityFilterBuilder.validateSortFields(sort);
+        }
+
+        List<City> cities = cityRepository.findAll(sort, filter, page - 1, pageSize);
+        long totalCities = cityRepository.count(filter);
 
         CitiesResponseDto response = new CitiesResponseDto();
         response.setData(cityMapper.toDtoList(cities));
