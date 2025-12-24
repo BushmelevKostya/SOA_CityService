@@ -144,4 +144,10 @@ public class CityController {
         }
     }
 
+    @GET
+    @Path("/pool-size")
+    @Produces(MediaType.TEXT_PLAIN)
+    public String getPoolSize() {
+        return "Pool size: " + cityService.getPoolCurrentSize();
+    }
 }

@@ -29,6 +29,7 @@ dependencies {
     // JPA Implementation (Hibernate)
     implementation("org.hibernate.orm:hibernate-core:6.4.0.Final")
     implementation("com.orbitz.consul:consul-client:1.5.3")
+    compileOnly("org.jboss.logging:jboss-logging:3.5.3.Final")
 }
 
 tasks.jar {

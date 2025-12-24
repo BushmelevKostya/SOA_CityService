@@ -138,7 +138,7 @@ public class ConsulRegistrationService {
         try {
             java.net.URL obj = new java.net.URL(url);
             java.net.HttpURLConnection con = (java.net.HttpURLConnection) obj.openConnection();
-            con.setRequestMethod("POST");
+            con.setRequestMethod("PUT");
             con.setRequestProperty("Content-Type", "application/json");
             con.setDoOutput(true);
             
