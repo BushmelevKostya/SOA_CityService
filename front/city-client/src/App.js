@@ -38,8 +38,8 @@ function App() {
     deportTo: ''
   });
 
-  const API_BASE_URL = 'https://127.0.0.1:8443/api/v1';
-  const GENOCIDE_API_URL = 'https://127.0.0.1:8443/api/v1/genocide';
+  const API_BASE_URL = 'http://127.0.0.1:5736/api/v1';
+  const GENOCIDE_API_URL = 'http://127.0.0.1:5738/api/v1/genocide';
 
   // Создание заголовков с аутентификацией
   const getAuthHeaders = () => {
