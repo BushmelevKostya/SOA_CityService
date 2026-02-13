@@ -1,0 +1,45 @@
+$JBOSS_HOME/bin/jboss-cli.sh --connect
+
+/subsystem=ejb3/strict-max-bean-instance-pool=*:read-resource
+
+curl http://localhost:8500/v1/agent/services
+
+curl http://localhost:8500/v1/health/service/city-service
+
+curl http://localhost:8500/v1/agent/checks
+
+./standalone.sh -Dconsul.host=localhost -Dconsul.port=8500 -Djboss.https.port=8443
+
+
+
+
+# CityService
+
+Устанавливаем размер пула = 2
+
+/opt/homebrew/opt/wildfly-as/libexec/bin/jboss-cli.sh --connect
+
+/subsystem=ejb3/strict-max-bean-instance-pool=slsb-strict-max-pool:read-resource
+
+/subsystem=ejb3/strict-max-bean-instance-pool=slsb-strict-max-pool:write-attribute(name=derive-size,value=undefined)
+
+/subsystem=ejb3/strict-max-bean-instance-pool=slsb-strict-max-pool:write-attribute(name=max-pool-size,value=2)
+
+:reload
+
+
+Показать что consul работает
+
+http://localhost:8500/ui/dc1/overview/server-status
+
+
+
+
+
+
+
+
+
+#PopulationService
+
+http://localhost:8761
